@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Log Collector and Serrebi Fixes</title></head>
+<body>
+<h1>Log Collector and Serrebi Fixes</h1>
+
+<h2>Log Collector</h2>
+<p>Adds <em>Tools → Collect log errors…</em> and the <strong>NVDA+Shift+L</strong> gesture to gather ERROR/CRITICAL entries and tracebacks from the NVDA logs, together with environment and add-on information, shown in a dialog you can copy or save.</p>
+<p><strong>NVDA+Shift+D</strong> toggles live debug-log capture: press once to start, once again to copy the captured debug output to the clipboard.</p>
+
+<h2>Serrebi Fixes</h2>
+<p>Applies targeted fixes for NVDA core bugs observed in the wild:</p>
+<ul>
+<li>Guards review-mode position functions against a <code>None</code> navigator object.</li>
+<li>Stops wxPython assertion failures from poisoning unrelated callbacks.</li>
+<li>Guards the settings-panel refresh against a destroyed sizer.</li>
+<li>Translates a failed cross-process caret lookup in Firefox/Thunderbird into the expected "no caret" signal.</li>
+<li>Drops benign COM proxy registration leak warnings from UWP app hosts.</li>
+<li>Suppresses "Malformed add-on scan results" spam caused by cached null scan data.</li>
+</ul>
+</body></html>
