@@ -7,6 +7,8 @@ An NVDA add-on with two parts:
 - **Serrebi Fixes** — targeted monkeypatches for NVDA core bugs observed in the
   wild (see `globalPlugins/serrebiFixes.py` for the full rationale of each fix).
 
+**Questions, bugs, or release news?** Join the [SerrebiProjects Telegram group](https://t.me/SerrebiProjects), the fastest place to get help.
+
 ## Gestures
 
 - `NVDA+Shift+L` — collect log errors/tracebacks into a copyable report.
