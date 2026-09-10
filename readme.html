@@ -13,8 +13,14 @@
 <li>Guards review-mode position functions against a <code>None</code> navigator object.</li>
 <li>Stops wxPython assertion failures from poisoning unrelated callbacks.</li>
 <li>Guards the settings-panel refresh against a destroyed sizer.</li>
-<li>Translates a failed cross-process caret lookup in Firefox/Thunderbird into the expected "no caret" signal.</li>
+<li>Translates a failed cross-process content lookup in Firefox/Thunderbird into the "no caret" and "no descendant" signals core already handles, for every position rather than only the caret.</li>
+<li>Keeps a focused control announced when its document cannot produce text at that instant, by speaking its name, role and state instead of nothing.</li>
+<li>Reads an unloaded virtual buffer as empty, so closing or navigating a tab mid-say-all ends the reader cleanly instead of failing an RPC call.</li>
+<li>Lets a table cell report its position on providers that implement only IAccessibleTable2, instead of aborting the announcement.</li>
+<li>Demotes the logon-session comparison error logged when an application simply exits.</li>
+<li>Stops phantom "WinError 0" failures from aborting braille display auto-detection scans.</li>
 <li>Drops benign COM proxy registration leak warnings from UWP app hosts.</li>
 <li>Suppresses "Malformed add-on scan results" spam caused by cached null scan data.</li>
 </ul>
+<p>Each fix carries its full diagnosis, including the traceback that prompted it and why the chosen degradation is the one core already expects, in the comments at the top of <code>globalPlugins/serrebiFixes.py</code>.</p>
 </body></html>

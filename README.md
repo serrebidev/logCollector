@@ -20,4 +20,15 @@ An NVDA add-on with two parts:
 python build.py
 ```
 
-The packed add-on is written to `dist/logCollectorAndFixesFromSerrebi-2026.8.19.1.nvda-addon`.
+The version comes from `manifest.ini`, so the packed add-on is written to
+`dist/logCollectorAndFixesFromSerrebi-<version>.nvda-addon`.
+
+## Tests
+
+```
+python -m unittest discover -s tests
+```
+
+The guards patch NVDA core, so the suite runs against a reproduction of NVDA's
+own auto-property machinery and of the core call sites each guard protects.
+Run it before tagging a release.
