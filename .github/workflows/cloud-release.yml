@@ -1,0 +1,47 @@
+name: Cloud Release
+
+# Cloud release pipeline. dry_run=true (default) builds everything and uploads
+# the artifact, publishing nothing. dry_run=false builds and publishes a
+# GitHub release.
+#   gh workflow run cloud-release.yml -f dry_run=true
+#   gh workflow run cloud-release.yml -f dry_run=false
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build only; publish nothing'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build add-on
+        run: python3 build.py
+      - name: Read version
+        id: version
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import re
+          src = open('manifest.ini').read()
+          m = re.search(r'^version\s*=\s*"(.+?)"', src, re.M)
+          print('version=' + m.group(1))
+          PY
+      - name: Upload artifact (dry run)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: addon-${{ steps.version.outputs.version }}
+          path: |
+            dist/*.nvda-addon
+
