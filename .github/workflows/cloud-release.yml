@@ -34,7 +34,7 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import re
           src = open('manifest.ini').read()
-          m = re.search(r'^version\s*=\s*"(.+?)"', src, re.M)
+          m = re.search(r'^version\s*=\s*"?([^"\r\n]+?)"?\s*$', src, re.M)
           print('version=' + m.group(1))
           PY
       - name: Upload artifact (dry run)
