@@ -120,14 +120,27 @@ def _get_addons_list():
 
 
 def _get_log_paths(currentOnly=False):
-    paths = []
+    # NVDA started with --log-file writes somewhere other than %TEMP%, and
+    # keeps nvda-old.log beside it, so follow the file NVDA actually opened.
+    log_file = None
     try:
-        temp_dir = tempfile.gettempdir()
-        paths.append(os.path.join(temp_dir, "nvda.log"))
-        if not currentOnly:
-            paths.append(os.path.join(temp_dir, "nvda-old.log"))
+        import globalVars
+
+        log_file = getattr(globalVars.appArgs, "logFileName", None)
     except Exception:
-        pass
+        log_file = None
+    if not log_file:
+        try:
+            log_file = os.path.join(tempfile.gettempdir(), "nvda.log")
+        except Exception:
+            log_file = None
+
+    paths = []
+    if log_file:
+        log_file = os.path.abspath(log_file)
+        paths.append(log_file)
+        if not currentOnly:
+            paths.append(os.path.join(os.path.dirname(log_file), "nvda-old.log"))
 
     seen = set()
     result = []
