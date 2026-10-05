@@ -209,14 +209,18 @@ class TestDeadVBufGuard(unittest.TestCase):
         """Unloaded between the handle check and the call itself."""
 
         def _getSelectionOffsets(info):
-            raise OSError(22, "boom", None, 1775)
+            error = OSError(22, "boom")
+            error.winerror = 1775
+            raise error
 
         guarded = sf._deadVBufSafe((0, 0))(_getSelectionOffsets)
         self.assertEqual(guarded(_FakeInfo(7)), (0, 0))
 
     def test_unrelatedOSErrorIsReRaised(self):
         def _getSelectionOffsets(info):
-            raise OSError(22, "access denied", None, 5)
+            error = OSError(22, "access denied")
+            error.winerror = 5
+            raise error
 
         guarded = sf._deadVBufSafe((0, 0))(_getSelectionOffsets)
         with self.assertRaises(OSError) as caught:
