@@ -2,7 +2,8 @@ name: Cloud Release
 
 # Cloud release pipeline. dry_run=true (default) builds everything and uploads
 # the artifact, publishing nothing. dry_run=false builds and publishes a
-# GitHub release.
+# Forgejo release (tag push plus the Forgejo releases API; needs a
+# FORGEJO_TOKEN secret with release scope).
 #   gh workflow run cloud-release.yml -f dry_run=true
 #   gh workflow run cloud-release.yml -f dry_run=false
 
@@ -47,15 +48,45 @@ jobs:
           path: |
             dist/*.nvda-addon
 
-      - name: Publish release
+      - name: Publish release (Forgejo)
         if: ${{ !inputs.dry_run }}
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.version.outputs.version }}
-          target_commitish: ${{ github.sha }}
-          name: ${{ steps.version.outputs.version }}
-          draft: false
-          make_latest: true
-          fail_on_unmatched_files: true
-          files: |
-            dist/*.nvda-addon
+        env:
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          FORGEJO_REPO: serrebi/logCollector
+          TAG: ${{ steps.version.outputs.version }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          api="https://git.serrebiradio.com/api/v1/repos/$FORGEJO_REPO"
+          [ -n "${FORGEJO_TOKEN:-}" ] || { echo "::error::FORGEJO_TOKEN secret is not set."; exit 1; }
+          git tag -f "$TAG" "$TARGET_SHA"
+          git push "https://x-access-token:${FORGEJO_TOKEN}@git.serrebiradio.com/${FORGEJO_REPO}.git" "$TAG"
+          release="$(curl -sS -H "Authorization: token $FORGEJO_TOKEN" "$api/releases/tags/$TAG")"
+          id="$(echo "$release" | jq -r '.id // empty')"
+          if [ -z "$id" ]; then
+            release="$(curl -sS -X POST -H "Authorization: token $FORGEJO_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"draft\":true}" "$api/releases")"
+            id="$(echo "$release" | jq -r '.id // empty')"
+            [ -n "$id" ] || { echo "::error::Could not create the Forgejo release for $TAG: $release"; exit 1; }
+          fi
+          shopt -s nullglob
+          files=(dist/*.nvda-addon)
+          [ "${#files[@]}" -gt 0 ] || { echo "::error::Nothing to upload in dist/."; exit 1; }
+          for file in "${files[@]}"; do
+            name="$(basename "$file")"
+            asset_id="$(echo "$release" | jq -r --arg name "$name" '[.assets[]? | select(.name == $name) | .id][0] // empty')"
+            if [ -n "$asset_id" ]; then
+              echo "Replacing $name on $TAG..."
+              curl -sS -X DELETE -H "Authorization: token $FORGEJO_TOKEN" \
+                "$api/releases/$id/assets/$asset_id" >/dev/null
+            else
+              echo "Uploading $name to $TAG..."
+            fi
+            curl -sS -H "Authorization: token $FORGEJO_TOKEN" \
+              -F "attachment=@$file" "$api/releases/$id/assets?name=$name" >/dev/null
+          done
+          curl -sS -X PATCH -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" -d '{"draft":false}' \
+            "$api/releases/$id" >/dev/null
+          echo "Published $TAG on Forgejo."
